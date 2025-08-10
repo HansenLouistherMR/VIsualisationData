@@ -1,0 +1,57 @@
+from flask import Flask, render_template, request, redirect, url_for, flash
+import pandas as pd
+import os
+
+app = Flask(__name__)
+app.secret_key = "supersecretkey"
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file:
+            flash("Harap unggah file CSV!", "danger")
+            return redirect(url_for("index"))
+
+        filename = file.filename
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        try:
+            df = pd.read_csv(filepath, encoding="utf-8-sig", sep=",")
+            # Bersihkan nama kolom
+            df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+            # Pastikan kolom ada
+            expected_cols = ["inflasi", "suku_bunga", "cadangan_devisa", "transaksi"]
+            for col in expected_cols:
+                if col not in df.columns:
+                    flash(f"Kolom '{col}' tidak ditemukan!", "danger")
+                    return redirect(url_for("index"))
+
+            # Data untuk Chart.js
+            labels = list(range(1, len(df) + 1))  # bisa diganti tanggal kalau ada
+            inflasi = df["inflasi"].tolist()
+            suku_bunga = df["suku_bunga"].tolist()
+            cadangan_devisa = df["cadangan_devisa"].tolist()
+            transaksi = df["transaksi"].tolist()
+
+            return render_template("result.html",
+                                   filename=filename,
+                                   labels=labels,
+                                   inflasi=inflasi,
+                                   suku_bunga=suku_bunga,
+                                   cadangan_devisa=cadangan_devisa,
+                                   transaksi=transaksi)
+        except Exception as e:
+            flash(f"Error membaca file: {str(e)}", "danger")
+            return redirect(url_for("index"))
+
+    return render_template("index.html")
+
+if __name__ == "__main__":
+    app.run(debug=True)

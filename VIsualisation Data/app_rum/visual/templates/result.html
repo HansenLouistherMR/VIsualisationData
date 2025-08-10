@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hasil Analisis</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2>Hasil Analisis - {{ filename }}</h2>
+    <a href="/" class="btn btn-secondary mb-3">Kembali</a>
+
+    {% if type == "csv" %}
+        <div class="mb-5">
+            <h4>Grafik Tren Inflasi & Suku Bunga</h4>
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="mb-5">
+            <h4>Grafik Cadangan Devisa & Transaksi</h4>
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <script>
+        const labels = {{ labels|tojson }};
+        const inflasi = {{ inflasi|tojson }};
+        const sukuBunga = {{ suku_bunga|tojson }};
+        const cadanganDevisa = {{ cadangan_devisa|tojson }};
+        const transaksi = {{ transaksi|tojson }};
+
+        // Grafik Garis
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Inflasi',
+                        data: inflasi,
+                        borderColor: 'rgba(255,99,132,1)',
+                        backgroundColor: 'rgba(255,99,132,0.2)',
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Suku Bunga',
+                        data: sukuBunga,
+                        borderColor: 'rgba(54,162,235,1)',
+                        backgroundColor: 'rgba(54,162,235,0.2)',
+                        tension: 0.3
+                    }
+                ]
+            }
+        });
+
+        // Grafik Batang
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Cadangan Devisa',
+                        data: cadanganDevisa,
+                        backgroundColor: 'rgba(255,206,86,0.6)',
+                        borderColor: 'rgba(255,206,86,1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Transaksi',
+                        data: transaksi,
+                        backgroundColor: 'rgba(75,192,192,0.6)',
+                        borderColor: 'rgba(75,192,192,1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        </script>
+
+    {% elif type == "txt" %}
+        <h4>Laporan Naratif Ekonomi</h4>
+        <pre class="p-3 bg-white border">{{ text_content }}</pre>
+    {% endif %}
+</div>
+</body>
+</html>
